@@ -1,0 +1,29 @@
+{
+  "name": "skillpacker",
+  "version": "0.1.0",
+  "description": "Resolve, lock, and bundle agent skills",
+  "type": "module",
+  "bin": { "skillpacker": "./dist/src/cli.js" },
+  "exports": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "files": ["dist/src", "README.md"],
+  "engines": { "node": ">=20.19" },
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test dist/test",
+    "check": "tsc --noEmit",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "semver": "^7.7.3",
+    "zod": "^3.25.76",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "@types/semver": "^7.7.1",
+    "typescript": "^5.9.3"
+  },
+  "license": "MIT",
+  "private": true
+}

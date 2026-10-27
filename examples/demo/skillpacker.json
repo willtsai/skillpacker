@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "name": "demo-cabinet",
+  "version": "0.1.0",
+  "skills": ["skills/demo-ceo"],
+  "dependencies": {
+    "demo-writing": {
+      "source": { "type": "local", "path": "../writing" },
+      "package": {
+        "skills": ["skills/demo-writing-review"],
+        "notices": ["LICENSE"]
+      }
+    }
+  }
+}
