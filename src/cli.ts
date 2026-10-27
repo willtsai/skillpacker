@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { JsonManifestReader, nameSchema } from "./manifest.js";
 import { Sources } from "./sources.js";
@@ -18,6 +18,7 @@ Usage:
 Options:
   --cwd DIRECTORY   Project directory (default: current directory)
   --help            Show help
+  --version         Show the installed version
 
 Resolve refreshes the complete graph and writes skillpacker.lock.json.
 Validate and build are always frozen: they require and verify the lockfile.
@@ -29,9 +30,17 @@ async function main(): Promise<void> {
     allowPositionals: true,
     options: {
       cwd: { type: "string" }, name: { type: "string" }, target: { type: "string" },
-      out: { type: "string" }, help: { type: "boolean" }
+      out: { type: "string" }, help: { type: "boolean" }, version: { type: "boolean" }
     }
   });
+  if (values.version) {
+    const metadata: unknown = JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8"));
+    if (!metadata || typeof metadata !== "object" || !("version" in metadata) || typeof metadata.version !== "string") {
+      throw new Error("Installed package metadata has no valid version");
+    }
+    console.log(metadata.version);
+    return;
+  }
   if (values.help || !positionals.length) { console.log(help); return; }
   const [command] = positionals;
   if (positionals.length !== 1 || !["init", "resolve", "validate", "build"].includes(command!)) {

@@ -6,29 +6,107 @@ Skillpacker is a local-first CLI that also runs in CI. Declare packages of skill
 resolve their recursive dependencies, lock exact Git commits and content hashes,
 and assemble self-contained portable, Copilot, or Claude Code bundles.
 
-This is an initial implementation, not a published npm package. The npm name has
-not been reserved or checked for availability. Publication is disabled with
-`private: true` until a release is ready.
+**Release status:** version 0.1.0 is not yet published. Before the npm installation
+commands below can work, a maintainer must secure the `skillpacker` name and publish it.
+Until then, install a built npm tarball as described below.
 
-## Requirements and development installation
+## Requirements and installation
 
 - Node.js 20.19 or later
 - npm
 - Git with access to your dependency repositories
 
+Use Node.js 24 for new build pipelines. Compatibility tests cover Node.js 20.19.0,
+22, and 24 on Linux, macOS, and Windows.
+
+### Build scripts and CI
+
+Install an exact version as a project development dependency:
+
+```sh
+npm install --save-dev --save-exact skillpacker@0.1.0
+```
+
+Commit `package.json` and `package-lock.json`. Add scripts to your consumer's
+`package.json` so npm uses the locally installed command:
+
+```json
+{
+  "scripts": {
+    "skills:version": "skillpacker --version",
+    "skills:check": "skillpacker validate",
+    "skills:build": "skillpacker build --target copilot --out bundles/release"
+  }
+}
+```
+
+After declaring your skills and resolving their lockfile, subsequent builds need:
+
+```sh
+npm ci --include=dev
+npm run skills:version
+npm run skills:check
+npm run skills:build
+```
+
+The npm package contains compiled JavaScript. Installing it requires neither a
+Skillpacker checkout nor TypeScript, and runs no compilation step. Git is still
+required to retrieve Git-based skill dependencies.
+
+The npm lockfile pins the tool and its dependencies; `skillpacker.lock.json` pins
+the skills. Keep both. Use fresh output directories: builds refuse to overwrite
+existing output. A global install or an unpinned `npx` invocation is not a substitute
+for a committed npm lockfile in CI.
+
+### Interactive use
+
+After publication, you can install the CLI globally:
+
+```sh
+npm install --global skillpacker@0.1.0
+skillpacker --version
+skillpacker --help
+```
+
+Global installation pins the tool version but does not provide a project lockfile.
+Nothing is installed into an agent host automatically.
+
+### Development and tarball installation
+
+From a Skillpacker source checkout:
+
 ```sh
 npm ci
 npm test
+npm run test:package
 node dist/src/cli.js --help
+npm pack
 ```
 
-Optionally run `npm link` to expose `skillpacker` locally. Nothing is installed
-into an agent host automatically.
+`npm pack` builds `skillpacker-0.1.0.tgz`. A consumer can install that distribution
+without rebuilding Skillpacker:
+
+```sh
+npm install --save-dev --save-exact /path/to/skillpacker-0.1.0.tgz
+```
+
+An absolute local tarball path is useful for testing, but is not portable to CI.
+Use the published package for shared lockfiles, or keep the tarball at a
+repository-relative path available to every build.
+
+`npm run test:package` packs and installs the CLI in a temporary consumer, tests the
+command shim and library import, reinstalls with `npm ci`, and checks frozen builds
+and failures. It disables install scripts and verifies that TypeScript is absent.
+It needs access to your configured npm registry or a populated npm cache.
+Set `SKILLPACKER_TARBALL` to an existing tarball path to test those exact bytes
+instead of packing again. Temporary test files are removed afterward.
+
+For source development, `npm link` can expose the checkout's CLI locally.
 
 ## Try the included example
 
-The example has a root skill and a separate local skill source with **no
-Skillpacker manifest**. The consumer selects what to bundle:
+The source checkout includes an example with a root skill and a separate local skill
+source with **no Skillpacker manifest**. The consumer selects what to bundle:
 
 ```sh
 node dist/src/cli.js resolve --cwd examples/demo
@@ -49,6 +127,7 @@ deleted or overwritten.
 | `skillpacker resolve` | Resolve the entire graph, selecting highest compatible versions with backtracking, and write a lockfile |
 | `skillpacker validate` | Verify root content, exact locked sources, hashes, and dependency constraints |
 | `skillpacker build --target portable --out bundles/release` | Verify the lock and assemble a bundle in a new directory |
+| `skillpacker --version` | Print the installed package version |
 
 All commands accept `--cwd DIRECTORY`. Commands are noninteractive, print errors
 to stderr, and exit nonzero on failure. `build` and `validate` are always frozen:
@@ -270,22 +349,130 @@ A future Agent Skills standard can be implemented as another reader. New semanti
 may still require resolver/model changes; unsupported semantics must not be dropped.
 Build targets and lockfiles remain separate from manifest syntax.
 
-## CI and release workflow
+## Consumer CI
 
 Developers run `resolve`, review dependency changes, and commit the manifest and
-lockfile. CI runs `validate` and `build` without resolving. The included GitHub Actions
-workflow runs type checks and tests on Linux, macOS, and Windows. It does not publish.
+lockfile. CI runs `validate` and `build` without resolving. For a consumer using the
+npm scripts above, a GitHub Actions job can run:
 
-For a real bundle project after installing a pinned Skillpacker release:
-
-```sh
-skillpacker validate
-skillpacker build --target claude --out bundles/claude-release
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: actions/setup-node@v4
+    with:
+      node-version: 24
+      cache: npm
+  - run: npm ci --include=dev
+  - run: npm run skills:version
+  - run: npm run skills:check
+  - run: npm run skills:build
 ```
+
+Run these steps from the directory containing the consumer's npm and Skillpacker
+manifests. For a nested project, also set `working-directory` on the run steps and
+`cache-dependency-path` on `setup-node`. GitHub-hosted runners provide Git; other
+CI environments must install it.
 
 Only a separate, authorized release step should publish that output. The CLI caches
 Git mirrors/snapshots within one invocation and deletes them afterward. Persistent
 cache management is not yet implemented.
+
+## Releasing Skillpacker
+
+[CI](.github/workflows/ci.yml) runs type checks, source tests, and installed-tarball
+tests on Linux, macOS, and Windows using Node.js 20.19.0, 22, and 24.
+It never publishes.
+
+The [Release workflow](.github/workflows/release.yml) is manually dispatched on an
+existing stable `vX.Y.Z` tag matching `package.json`. A branch or mismatched version
+fails before packing. The workflow packs once and tests that same artifact across
+the full OS/Node matrix. Its `publish` input defaults to `false`.
+When a maintainer enables publication, the workflow waits for every test job and the
+`npm` environment's approval rules, then publishes the tested tarball without
+rebuilding or running package lifecycle scripts. This initial workflow rejects
+prerelease tags so they cannot accidentally become npm's `latest`.
+
+### One-time setup
+
+1. Confirm that your npm account can publish `skillpacker`. Check the public registry
+   with `npm view skillpacker name version --registry=https://registry.npmjs.org`.
+   A missing package is not a reservation; authentication, permissions, and name
+   restrictions still apply. Do not treat network or authentication failures as
+   proof of availability.
+2. Enable two-factor authentication for the npm owner account.
+3. Create the GitHub environment **npm**, configure required reviewers, and allow
+   release tags. Ensure an authorized maintainer can approve its jobs. Merely naming
+   an environment in a workflow does not configure an approval gate.
+4. Merge these workflows to the default branch before dispatching a release.
+   Keep release tags immutable and restrict who can create them.
+
+### First publication
+
+For a new npm package, bootstrap ownership with an authorized interactive publish.
+Trusted-publisher configuration is managed in the settings of an existing npm
+package. Do not add a long-lived npm token to this repository or its workflows.
+
+After reviewing the code, licenses, README release status, and successful CI:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+gh workflow run release.yml --ref v0.1.0 -f publish=false
+gh run list --workflow release.yml
+```
+
+Select the matching run ID. Wait for it to succeed, then download its tested
+artifact (replace `RUN_ID` below):
+
+```sh
+gh run watch RUN_ID --exit-status
+gh run download RUN_ID --name npm-package --dir release
+npm login --registry=https://registry.npmjs.org
+npm publish ./release/skillpacker.tgz --access public --ignore-scripts --registry=https://registry.npmjs.org
+```
+
+Only run the publish command after all verification jobs pass. This first interactive
+publish does not provide GitHub Actions OIDC provenance. Check the registry version
+and test installation from npm in a clean consumer before announcing the release:
+
+```sh
+npm view skillpacker@0.1.0 version dist.integrity --registry=https://registry.npmjs.org
+npm install --save-dev --save-exact skillpacker@0.1.0 --registry=https://registry.npmjs.org
+npm exec -- skillpacker --version
+```
+
+Run the install commands in that consumer, not the Skillpacker checkout. Then remove
+the README's pending-release notice and create GitHub release notes, optionally
+attaching the tested tarball. Do not run the publish-enabled workflow for a version
+already published: npm versions cannot be replaced.
+
+### Subsequent publications
+
+Configure [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) for
+GitHub owner `willtsai`, repository `skillpacker`, workflow `release.yml`, and
+environment `npm`. The publish job uses a GitHub-hosted Node.js 24 runner and its
+OIDC-capable npm CLI, with `id-token: write`; it needs no `NPM_TOKEN`. npm generates
+provenance for eligible public-source trusted publishes.
+
+Configure the connection shortly before using it: npm currently requires its first
+successful publish within two days or the unvalidated configuration expires.
+After verifying OIDC publication, restrict traditional publishing-token access in
+npm's package settings.
+
+For each release, update the version in `package.json` and `package-lock.json`,
+review user-visible changes and compatibility, run CI, and commit and tag the result.
+Dispatch Release on that tag with `publish=true` and approve the environment job.
+For example, after preparing and pushing a matching `v0.1.1` tag:
+
+```sh
+gh workflow run release.yml --ref v0.1.1 -f publish=true
+```
+
+Verify the registry install, provenance, and CLI version before announcing success.
+If validation or publication fails, inspect the failed step; do not suppress errors
+or silently skip an existing version. For a bad published release, publish a new
+patch and deprecate the affected version with an actionable message rather than
+moving its tag or trying to overwrite it.
 
 ## Current limits and next steps
 

@@ -54,6 +54,14 @@ test("CLI init does not overwrite an existing manifest and invalid options fail"
   await assert.rejects(exec(process.execPath, [cli, "unknown"]), /Unknown command/);
 });
 
+test("CLI reports the package version without a project manifest", async t => {
+  const { directory } = await setup(t);
+  const metadata: unknown = JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8"));
+  assert.ok(metadata && typeof metadata === "object" && "version" in metadata);
+  const { stdout } = await exec(process.execPath, [cli, "--version"], { cwd: directory });
+  assert.equal(stdout.trim(), metadata.version);
+});
+
 test("real CLI resolve, validate, and build work end to end", async t => {
   const { directory } = await setup(t);
   await pkg(directory, "demo");
