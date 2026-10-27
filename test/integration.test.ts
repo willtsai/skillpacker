@@ -73,6 +73,25 @@ test("real CLI resolve, validate, and build work end to end", async t => {
   assert.equal(plugin.name, "demo");
 });
 
+test("Git sources ignore an inherited malformed global configuration", async t => {
+  const { directory } = await setup(t);
+  const upstream = path.join(directory, "upstream");
+  await pkg(upstream, "external");
+  await git(upstream, "init");
+  await tag(upstream, "1.0.0");
+  const root = path.join(directory, "root");
+  await pkg(root, "root", ["root"], {
+    external: { source: { type: "git", url: pathToFileURL(upstream).href }, version: "^1" }
+  });
+  const config = path.join(directory, "invalid.gitconfig");
+  await writeFile(config, "[invalid config\n");
+  for (const command of ["resolve", "validate"]) {
+    await exec(process.execPath, [cli, command, "--cwd", root], {
+      env: { ...process.env, GIT_CONFIG_GLOBAL: config }
+    });
+  }
+});
+
 test("Git tags resolve recursively; frozen build ignores newer tags and emits reproducible targets", async t => {
   const { directory, reader, sources } = await setup(t);
   const common = path.join(directory, "common");
