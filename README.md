@@ -6,9 +6,8 @@ Skillpacker is a local-first CLI that also runs in CI. Declare packages of skill
 resolve their recursive dependencies, lock exact Git commits and content hashes,
 and assemble self-contained portable, Copilot, or Claude Code bundles.
 
-**Release status:** `@willtsai/skillpacker` version 0.1.1 is not yet published.
-Before the npm installation commands below can work, a maintainer must publish it.
-Until then, install a built npm tarball as described below.
+**Available on npm:** [`@willtsai/skillpacker`](https://www.npmjs.com/package/@willtsai/skillpacker),
+starting with version 0.1.1.
 
 The npm package is scoped to `@willtsai`; the tool and CLI command remain
 `skillpacker`. The unscoped npm name is not used.
@@ -69,7 +68,7 @@ for a committed npm lockfile in CI.
 
 ### Interactive use
 
-After publication, you can install the CLI globally:
+You can install the CLI globally:
 
 ```sh
 npm install --global @willtsai/skillpacker@0.1.1
@@ -415,46 +414,17 @@ prerelease tags so they cannot accidentally become npm's `latest`.
 4. Merge these workflows to the default branch before dispatching a release.
    Keep release tags immutable and restrict who can create them.
 
-### First publication
+### First publication (completed)
 
-For a new npm package, bootstrap ownership with an authorized interactive publish.
-Trusted-publisher configuration is managed in the settings of an existing npm
-package. Do not add a long-lived npm token to this repository or its workflows.
-
-After reviewing the code, licenses, README release status, and successful CI:
-
-Check production dependencies for known advisories before tagging, and resolve
-reported vulnerabilities before publishing:
-
-```sh
-npm audit --omit=dev
-```
-
-Version 0.1.1 is the first scoped release candidate. The existing `v0.1.0` tag
+Version 0.1.1 was published as `@willtsai/skillpacker` after the
+[release verification matrix](https://github.com/willtsai/skillpacker/actions/runs/40638897440)
+passed. The first publication used interactive npm authentication and the exact
+CI-tested tarball; it does not provide GitHub Actions OIDC provenance.
+The existing `v0.1.0` tag
 and its tarball describe the unscoped package; do not move that tag or publish
-that artifact. Commit and push the scoped package changes, then create the new
-release tag and run verification:
+that artifact.
 
-```sh
-git tag v0.1.1
-git push origin v0.1.1
-gh workflow run release.yml --ref v0.1.1 -f publish=false
-gh run list --workflow release.yml
-```
-
-Select the matching run ID. Wait for it to succeed, then download its tested
-artifact (replace `RUN_ID` below):
-
-```sh
-gh run watch RUN_ID --exit-status
-gh run download RUN_ID --name npm-package --dir release
-npm login --registry=https://registry.npmjs.org
-npm publish ./release/willtsai-skillpacker.tgz --access public --ignore-scripts --registry=https://registry.npmjs.org
-```
-
-Only run the publish command after all verification jobs pass. This first interactive
-publish does not provide GitHub Actions OIDC provenance. Check the registry version
-and test installation from npm in a clean consumer before announcing the release:
+To verify the published version and install it in a clean consumer:
 
 ```sh
 npm view @willtsai/skillpacker@0.1.1 version dist.integrity --registry=https://registry.npmjs.org
@@ -462,13 +432,13 @@ npm install --save-dev --save-exact @willtsai/skillpacker@0.1.1 --registry=https
 npm exec -- skillpacker --version
 ```
 
-Run the install commands in that consumer, not the Skillpacker checkout. Then remove
-the README's pending-release notice and create GitHub release notes, optionally
-attaching the tested tarball. Do not run the publish-enabled workflow for a version
-already published: npm versions cannot be replaced.
+Run the install commands in that consumer, not the Skillpacker checkout.
+Do not run the publish-enabled workflow for a version already published:
+npm versions cannot be replaced.
 
 ### Subsequent publications
 
+Do not add a long-lived npm token to this repository or its workflows.
 In the npm settings for `@willtsai/skillpacker`, configure
 [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) for
 GitHub owner `willtsai`, repository `skillpacker`, workflow `release.yml`, and
@@ -480,6 +450,13 @@ Configure the connection shortly before using it: npm currently requires its fir
 successful publish within two days or the unvalidated configuration expires.
 After verifying OIDC publication, restrict traditional publishing-token access in
 npm's package settings.
+
+Check production dependencies for known advisories before tagging, and resolve
+reported vulnerabilities before publishing:
+
+```sh
+npm audit --omit=dev
+```
 
 For each release, update the version in `package.json` and `package-lock.json`,
 review user-visible changes and compatibility, run CI, and commit and tag the result.
