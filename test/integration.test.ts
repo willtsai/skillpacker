@@ -6,6 +6,7 @@ import { chmod, cp, lstat, mkdtemp, mkdir, writeFile, readFile, readdir, rm, sym
 import path from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { ZodError } from "zod";
 import { JsonManifestReader } from "../src/manifest.js";
 import { Sources } from "../src/sources.js";
 import { resolveLock, verifyLock, writeJson } from "../src/lock.js";
@@ -212,13 +213,34 @@ test("alternate manifest readers can feed the same resolver and bundler", async 
   assert.equal((await verifyLock(directory, reader, sources))[0]?.manifest.name, "demo");
 });
 
+test("manifest defaults remain valid through frozen lock verification", async t => {
+  const { directory, reader, sources } = await setup(t);
+  await writeJson(path.join(directory, "skillpacker.json"), {
+    schemaVersion: 1, name: "empty", version: "1.0.0"
+  });
+  const expected: Manifest = {
+    name: "empty", version: "1.0.0", skills: [], dependencies: {}, notices: []
+  };
+  assert.deepEqual(await reader.read(directory), expected);
+  await writeJson(path.join(directory, "skillpacker.lock.json"), await resolveLock(directory, reader, sources));
+  assert.deepEqual((await verifyLock(directory, reader, sources))[0]?.manifest, expected);
+});
+
 test("malformed locks and modified root content fail rather than resolving implicitly", async t => {
   const { directory, reader, sources } = await setup(t);
   await pkg(directory, "demo");
   const lock = await resolveLock(directory, reader, sources);
   const filename = path.join(directory, "skillpacker.lock.json");
   await writeJson(filename, { ...lock, lockVersion: 99 });
-  await assert.rejects(verifyLock(directory, reader, sources), /Invalid literal/);
+  await assert.rejects(verifyLock(directory, reader, sources), error => {
+    assert.ok(error instanceof ZodError);
+    assert.equal(error.issues.length, 1);
+    const issue = error.issues[0]!;
+    assert.equal(issue.code, "invalid_value");
+    assert.deepEqual(issue.path, ["lockVersion"]);
+    if (issue.code === "invalid_value") assert.deepEqual(issue.values, [1]);
+    return true;
+  });
   await writeJson(filename, lock);
   await writeFile(path.join(directory, "skills", "demo", "SKILL.md"),
     "---\nname: demo\ndescription: changed\n---\nChanged instructions.");

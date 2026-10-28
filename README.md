@@ -414,6 +414,15 @@ package. Do not add a long-lived npm token to this repository or its workflows.
 
 After reviewing the code, licenses, README release status, and successful CI:
 
+Check production dependencies for known advisories before tagging, and resolve
+reported vulnerabilities before publishing:
+
+```sh
+npm audit --omit=dev
+```
+
+Then create the release tag and run verification:
+
 ```sh
 git tag v0.1.0
 git push origin v0.1.0

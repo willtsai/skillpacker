@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "semver": "^7.7.3",
-    "zod": "^3.25.76",
+    "zod": "^4.6.7",
     "yaml": "^2.8.1"
   },
   "devDependencies": {
