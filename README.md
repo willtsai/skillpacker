@@ -6,9 +6,12 @@ Skillpacker is a local-first CLI that also runs in CI. Declare packages of skill
 resolve their recursive dependencies, lock exact Git commits and content hashes,
 and assemble self-contained portable, Copilot, or Claude Code bundles.
 
-**Release status:** version 0.1.0 is not yet published. Before the npm installation
-commands below can work, a maintainer must secure the `skillpacker` name and publish it.
+**Release status:** `@willtsai/skillpacker` version 0.1.1 is not yet published.
+Before the npm installation commands below can work, a maintainer must publish it.
 Until then, install a built npm tarball as described below.
+
+The npm package is scoped to `@willtsai`; the tool and CLI command remain
+`skillpacker`. The unscoped npm name is not used.
 
 ## Requirements and installation
 
@@ -24,7 +27,7 @@ Use Node.js 24 for new build pipelines. Compatibility tests cover Node.js 20.19.
 Install an exact version as a project development dependency:
 
 ```sh
-npm install --save-dev --save-exact skillpacker@0.1.0
+npm install --save-dev --save-exact @willtsai/skillpacker@0.1.1
 ```
 
 Commit `package.json` and `package-lock.json`. Add scripts to your consumer's
@@ -53,6 +56,12 @@ The npm package contains compiled JavaScript. Installing it requires neither a
 Skillpacker checkout nor TypeScript, and runs no compilation step. Git is still
 required to retrieve Git-based skill dependencies.
 
+Library consumers import from `@willtsai/skillpacker`, not `skillpacker`:
+
+```js
+import { JsonManifestReader, Sources, resolveLock, verifyLock, buildBundle } from "@willtsai/skillpacker";
+```
+
 The npm lockfile pins the tool and its dependencies; `skillpacker.lock.json` pins
 the skills. Keep both. Use fresh output directories: builds refuse to overwrite
 existing output. A global install or an unpinned `npx` invocation is not a substitute
@@ -63,7 +72,7 @@ for a committed npm lockfile in CI.
 After publication, you can install the CLI globally:
 
 ```sh
-npm install --global skillpacker@0.1.0
+npm install --global @willtsai/skillpacker@0.1.1
 skillpacker --version
 skillpacker --help
 ```
@@ -83,11 +92,11 @@ node dist/src/cli.js --help
 npm pack
 ```
 
-`npm pack` builds `skillpacker-0.1.0.tgz`. A consumer can install that distribution
+`npm pack` builds `willtsai-skillpacker-0.1.1.tgz`. A consumer can install that distribution
 without rebuilding Skillpacker:
 
 ```sh
-npm install --save-dev --save-exact /path/to/skillpacker-0.1.0.tgz
+npm install --save-dev --save-exact /path/to/willtsai-skillpacker-0.1.1.tgz
 ```
 
 An absolute local tarball path is useful for testing, but is not portable to CI.
@@ -394,8 +403,8 @@ prerelease tags so they cannot accidentally become npm's `latest`.
 
 ### One-time setup
 
-1. Confirm that your npm account can publish `skillpacker`. Check the public registry
-   with `npm view skillpacker name version --registry=https://registry.npmjs.org`.
+1. Confirm that your npm account can publish under the `@willtsai` scope. Check the public registry
+   with `npm view @willtsai/skillpacker name version --registry=https://registry.npmjs.org`.
    A missing package is not a reservation; authentication, permissions, and name
    restrictions still apply. Do not treat network or authentication failures as
    proof of availability.
@@ -421,12 +430,15 @@ reported vulnerabilities before publishing:
 npm audit --omit=dev
 ```
 
-Then create the release tag and run verification:
+Version 0.1.1 is the first scoped release candidate. The existing `v0.1.0` tag
+and its tarball describe the unscoped package; do not move that tag or publish
+that artifact. Commit and push the scoped package changes, then create the new
+release tag and run verification:
 
 ```sh
-git tag v0.1.0
-git push origin v0.1.0
-gh workflow run release.yml --ref v0.1.0 -f publish=false
+git tag v0.1.1
+git push origin v0.1.1
+gh workflow run release.yml --ref v0.1.1 -f publish=false
 gh run list --workflow release.yml
 ```
 
@@ -437,7 +449,7 @@ artifact (replace `RUN_ID` below):
 gh run watch RUN_ID --exit-status
 gh run download RUN_ID --name npm-package --dir release
 npm login --registry=https://registry.npmjs.org
-npm publish ./release/skillpacker.tgz --access public --ignore-scripts --registry=https://registry.npmjs.org
+npm publish ./release/willtsai-skillpacker.tgz --access public --ignore-scripts --registry=https://registry.npmjs.org
 ```
 
 Only run the publish command after all verification jobs pass. This first interactive
@@ -445,8 +457,8 @@ publish does not provide GitHub Actions OIDC provenance. Check the registry vers
 and test installation from npm in a clean consumer before announcing the release:
 
 ```sh
-npm view skillpacker@0.1.0 version dist.integrity --registry=https://registry.npmjs.org
-npm install --save-dev --save-exact skillpacker@0.1.0 --registry=https://registry.npmjs.org
+npm view @willtsai/skillpacker@0.1.1 version dist.integrity --registry=https://registry.npmjs.org
+npm install --save-dev --save-exact @willtsai/skillpacker@0.1.1 --registry=https://registry.npmjs.org
 npm exec -- skillpacker --version
 ```
 
@@ -457,7 +469,8 @@ already published: npm versions cannot be replaced.
 
 ### Subsequent publications
 
-Configure [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) for
+In the npm settings for `@willtsai/skillpacker`, configure
+[npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) for
 GitHub owner `willtsai`, repository `skillpacker`, workflow `release.yml`, and
 environment `npm`. The publish job uses a GitHub-hosted Node.js 24 runner and its
 OIDC-capable npm CLI, with `id-token: write`; it needs no `NPM_TOKEN`. npm generates
@@ -471,10 +484,10 @@ npm's package settings.
 For each release, update the version in `package.json` and `package-lock.json`,
 review user-visible changes and compatibility, run CI, and commit and tag the result.
 Dispatch Release on that tag with `publish=true` and approve the environment job.
-For example, after preparing and pushing a matching `v0.1.1` tag:
+For example, after preparing and pushing a matching `v0.1.2` tag:
 
 ```sh
-gh workflow run release.yml --ref v0.1.1 -f publish=true
+gh workflow run release.yml --ref v0.1.2 -f publish=true
 ```
 
 Verify the registry install, provenance, and CLI version before announcing success.

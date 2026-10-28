@@ -27,20 +27,21 @@ test("the npm tarball works in an isolated consumer without compilation", { time
     await access(tarball);
   } else {
     await npm(["pack", "--pack-destination", temporary], project);
-    tarball = path.join(temporary, `skillpacker-${metadata.version}.tgz`);
+    tarball = path.join(temporary, `willtsai-skillpacker-${metadata.version}.tgz`);
   }
   await writeFile(path.join(consumer, "package.json"), JSON.stringify({
     name: "skillpacker-package-test", private: true, type: "module",
     scripts: { skillpacker: "skillpacker" }
   }));
   await npm(["install", "--save-dev", "--save-exact", "--ignore-scripts", "--no-audit", "--no-fund", tarball]);
-  const installed = path.join(consumer, "node_modules", "skillpacker");
+  const installed = path.join(consumer, "node_modules", "@willtsai", "skillpacker");
 
   await t.test("contains compiled entry points, declarations, and notices but no development files", async () => {
     const pkg = JSON.parse(await readFile(path.join(installed, "package.json"), "utf8"));
-    assert.equal(pkg.name, "skillpacker");
+    assert.equal(pkg.name, "@willtsai/skillpacker");
     assert.equal(pkg.version, metadata.version);
     assert.notEqual(pkg.private, true);
+    assert.equal(pkg.publishConfig.access, "public");
     assert.equal(pkg.publishConfig.registry, "https://registry.npmjs.org");
     for (const file of [pkg.bin.skillpacker, pkg.exports, pkg.types, "README.md", "LICENSE"]) {
       await access(path.join(installed, file));
@@ -68,7 +69,7 @@ test("the npm tarball works in an isolated consumer without compilation", { time
     assert.equal((await cli("--version")).stdout.trim(), metadata.version);
     await exec(process.execPath, ["--input-type=module", "--eval", `
       import assert from "node:assert/strict";
-      import * as api from "skillpacker";
+      import * as api from "@willtsai/skillpacker";
       for (const name of ["JsonManifestReader", "Sources", "resolveGraph", "resolveLock", "verifyLock", "buildBundle"]) {
         assert.equal(typeof api[name], "function", name);
       }

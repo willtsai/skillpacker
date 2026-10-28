@@ -34,11 +34,11 @@ jobs:
         run: |
           mkdir release
           npm pack --pack-destination release
-          mv release/skillpacker-*.tgz release/skillpacker.tgz
+          mv release/willtsai-skillpacker-*.tgz release/willtsai-skillpacker.tgz
       - uses: actions/upload-artifact@v4
         with:
           name: npm-package
-          path: release/skillpacker.tgz
+          path: release/willtsai-skillpacker.tgz
           if-no-files-found: error
   verify:
     needs: pack
@@ -63,7 +63,7 @@ jobs:
       - run: npm test
       - run: npm run test:package
         env:
-          SKILLPACKER_TARBALL: release/skillpacker.tgz
+          SKILLPACKER_TARBALL: release/willtsai-skillpacker.tgz
   publish:
     if: ${{ inputs.publish }}
     needs: verify
@@ -81,4 +81,4 @@ jobs:
           name: npm-package
           path: release
       - run: npm --version
-      - run: npm publish release/skillpacker.tgz --access public --ignore-scripts --registry=https://registry.npmjs.org
+      - run: npm publish release/willtsai-skillpacker.tgz --access public --ignore-scripts --registry=https://registry.npmjs.org

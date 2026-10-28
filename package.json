@@ -1,19 +1,28 @@
 {
-  "name": "skillpacker",
-  "version": "0.1.0",
+  "name": "@willtsai/skillpacker",
+  "version": "0.1.1",
   "description": "Resolve, lock, and bundle agent skills",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/willtsai/skillpacker.git"
   },
   "homepage": "https://github.com/willtsai/skillpacker#readme",
-  "bugs": { "url": "https://github.com/willtsai/skillpacker/issues" },
+  "bugs": {
+    "url": "https://github.com/willtsai/skillpacker/issues"
+  },
   "type": "module",
-  "bin": { "skillpacker": "./dist/src/cli.js" },
+  "bin": {
+    "skillpacker": "./dist/src/cli.js"
+  },
   "exports": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
-  "files": ["dist/src", "README.md"],
-  "engines": { "node": ">=20.19" },
+  "files": [
+    "dist/src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
     "build": "tsc",
     "test": "npm run build && node --test dist/test/integration.test.js dist/test/resolver.test.js",
@@ -23,8 +32,8 @@
   },
   "dependencies": {
     "semver": "^7.7.3",
-    "zod": "^4.6.7",
-    "yaml": "^2.8.1"
+    "yaml": "^2.8.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^20.19.0",
