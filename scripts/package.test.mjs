@@ -58,6 +58,19 @@ test("the npm tarball works in an isolated consumer without compilation", { time
     assert.match(await readFile(path.join(installed, pkg.bin.skillpacker), "utf8"), /^#!\/usr\/bin\/env node\r?\n/);
   });
 
+  await t.test("can publish the tarball from an artifact-only directory in dry-run mode", async () => {
+    const publisher = path.join(temporary, "publisher");
+    await mkdir(path.join(publisher, "release"), { recursive: true });
+    await cp(tarball, path.join(publisher, "release", "willtsai-skillpacker.tgz"));
+    const { stdout } = await npm([
+      "publish", "./release/willtsai-skillpacker.tgz", "--dry-run", "--json",
+      "--access", "public", "--ignore-scripts", "--registry=https://registry.npmjs.org"
+    ], publisher);
+    const published = JSON.parse(stdout);
+    assert.equal(published.name, "@willtsai/skillpacker");
+    assert.equal(published.version, metadata.version);
+  });
+
   const cli = (...args) => npm(["run", "--silent", "skillpacker", "--", ...args]);
   const failure = pattern => error => {
     assert.equal(error.code, 1);
