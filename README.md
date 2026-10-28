@@ -26,7 +26,7 @@ Use Node.js 24 for new build pipelines. Compatibility tests cover Node.js 20.19.
 Install an exact version as a project development dependency:
 
 ```sh
-npm install --save-dev --save-exact @willtsai/skillpacker@0.1.1
+npm install --save-dev --save-exact @willtsai/skillpacker@0.1.2
 ```
 
 Commit `package.json` and `package-lock.json`. Add scripts to your consumer's
@@ -71,7 +71,7 @@ for a committed npm lockfile in CI.
 You can install the CLI globally:
 
 ```sh
-npm install --global @willtsai/skillpacker@0.1.1
+npm install --global @willtsai/skillpacker@0.1.2
 skillpacker --version
 skillpacker --help
 ```
@@ -91,11 +91,11 @@ node dist/src/cli.js --help
 npm pack
 ```
 
-`npm pack` builds `willtsai-skillpacker-0.1.1.tgz`. A consumer can install that distribution
+`npm pack` builds `willtsai-skillpacker-0.1.2.tgz`. A consumer can install that distribution
 without rebuilding Skillpacker:
 
 ```sh
-npm install --save-dev --save-exact /path/to/willtsai-skillpacker-0.1.1.tgz
+npm install --save-dev --save-exact /path/to/willtsai-skillpacker-0.1.2.tgz
 ```
 
 An absolute local tarball path is useful for testing, but is not portable to CI.
