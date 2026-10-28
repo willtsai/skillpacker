@@ -66,7 +66,8 @@ test("the npm tarball works in an isolated consumer without compilation", { time
       "publish", "./release/willtsai-skillpacker.tgz", "--dry-run", "--json",
       "--access", "public", "--ignore-scripts", "--registry=https://registry.npmjs.org"
     ], publisher);
-    const published = JSON.parse(stdout);
+    const result = JSON.parse(stdout);
+    const published = result[metadata.name] ?? result;
     assert.equal(published.name, "@willtsai/skillpacker");
     assert.equal(published.version, metadata.version);
   });

@@ -26,7 +26,7 @@ Use Node.js 24 for new build pipelines. Compatibility tests cover Node.js 20.19.
 Install an exact version as a project development dependency:
 
 ```sh
-npm install --save-dev --save-exact @willtsai/skillpacker@0.1.3
+npm install --save-dev --save-exact @willtsai/skillpacker@0.1.4
 ```
 
 Commit `package.json` and `package-lock.json`. Add scripts to your consumer's
@@ -71,7 +71,7 @@ for a committed npm lockfile in CI.
 You can install the CLI globally:
 
 ```sh
-npm install --global @willtsai/skillpacker@0.1.3
+npm install --global @willtsai/skillpacker@0.1.4
 skillpacker --version
 skillpacker --help
 ```
@@ -91,11 +91,11 @@ node dist/src/cli.js --help
 npm pack
 ```
 
-`npm pack` builds `willtsai-skillpacker-0.1.3.tgz`. A consumer can install that distribution
+`npm pack` builds `willtsai-skillpacker-0.1.4.tgz`. A consumer can install that distribution
 without rebuilding Skillpacker:
 
 ```sh
-npm install --save-dev --save-exact /path/to/willtsai-skillpacker-0.1.3.tgz
+npm install --save-dev --save-exact /path/to/willtsai-skillpacker-0.1.4.tgz
 ```
 
 An absolute local tarball path is useful for testing, but is not portable to CI.
@@ -461,10 +461,10 @@ npm audit --omit=dev
 For each release, update the version in `package.json` and `package-lock.json`,
 review user-visible changes and compatibility, run CI, and commit and tag the result.
 Dispatch Release on that tag with `publish=true` and approve the environment job.
-For example, after preparing and pushing a matching `v0.1.3` tag:
+For example, after preparing and pushing a matching `v0.1.4` tag:
 
 ```sh
-gh workflow run release.yml --ref v0.1.3 -f publish=true
+gh workflow run release.yml --ref v0.1.4 -f publish=true
 ```
 
 Verify the registry install, provenance, and CLI version before announcing success.
